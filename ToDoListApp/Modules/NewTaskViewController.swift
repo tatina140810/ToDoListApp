@@ -17,6 +17,9 @@ struct DateFormatterHelper {
 }
 
 final class NewTaskViewController: UIViewController, UITextViewDelegate, UITextFieldDelegate {
+   
+    weak var delegate: NewTaskViewControllerDelegate?
+    
     private let titleText: UITextField = {
         let titleText = UITextField()
         titleText.textColor = .white
@@ -122,6 +125,14 @@ final class NewTaskViewController: UIViewController, UITextViewDelegate, UITextF
     }
     @objc private func backButtonTapped() {
         print("Пользователь нажал кнопку 'Назад'")
+        let storageManager = StorageManager.shared
+        let task = TaskEntity(context: storageManager.persistentContainer.viewContext)
+        task.title = titleText.text
+        task.taskDescription = textView.text
+        task.taskDate = dateLabel.text
+        task.completed = false
+        storageManager.saveContext()
+        delegate?.reloadData()
         
     }
     

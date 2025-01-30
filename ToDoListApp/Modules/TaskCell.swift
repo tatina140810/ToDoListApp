@@ -4,6 +4,7 @@ struct Task {
     let title: String
     let description: String
     let date: String
+    var completed: Bool
 }
 
 class TaskCell: UITableViewCell {

@@ -1,5 +1,9 @@
 import UIKit
+import CoreData
 
+protocol NewTaskViewControllerDelegate: AnyObject {
+    func reloadData()
+}
 class MainViewController: UITableViewController, UISearchResultsUpdating {
     
     private var tasks: [Task] = []
@@ -14,7 +18,8 @@ class MainViewController: UITableViewController, UISearchResultsUpdating {
         setupSearchBar()
         setupFooterView()
         tableView.register(TaskCell.self, forCellReuseIdentifier: "TaskCell")
-        loadTasks()
+       // loadTasks()
+        fetchData()
           }
 
           // MARK: - Загрузка задач из JSON
@@ -24,6 +29,7 @@ class MainViewController: UITableViewController, UISearchResultsUpdating {
                   self?.tableView.reloadData()
                   self?.tasksCount = self?.tasks.count ?? 0
                   self?.setupFooterView()
+                  
               }
           }
   
@@ -71,10 +77,55 @@ class MainViewController: UITableViewController, UISearchResultsUpdating {
 
        @objc private func addTaskTapped() {
            print("Кнопка 'Добавить' нажата ✅")
+           
            let vc = NewTaskViewController()
+           vc.delegate = self
            navigationController?.pushViewController(vc, animated: true)
        }
-    
+    private func fetchData() {
+        let storageManager = StorageManager.shared
+        let context = storageManager.context
+        let fetchRequest: NSFetchRequest<TaskEntity> = TaskEntity.fetchRequest()
+        
+        let sortDescriptor = NSSortDescriptor(key: "taskDate", ascending: true)
+        fetchRequest.sortDescriptors = [sortDescriptor]
+
+        do {
+            let fetchedTasks = try context.fetch(fetchRequest)
+        
+            tasks = fetchedTasks.map { taskEntity in
+                Task(
+                    title: taskEntity.title ?? "Без названия",
+                    description: taskEntity.taskDescription ?? "Нет описания",
+                    date: taskEntity.taskDate ?? "Нет даты",
+                    completed: false
+                )
+            }
+
+            tasksCount = tasks.count
+
+            DispatchQueue.main.async {
+                self.tableView.reloadData()
+            }
+        } catch {
+            print("Ошибка загрузки данных: \(error.localizedDescription)")
+        }
+        setupFooterView()
+        tableView.reloadData()
+    }
+    private func fetchTaskEntity(by title: String) -> TaskEntity? {
+        let fetchRequest: NSFetchRequest<TaskEntity> = TaskEntity.fetchRequest()
+        fetchRequest.predicate = NSPredicate(format: "title == %@", title)
+
+        do {
+            let tasks = try StorageManager.shared.context.fetch(fetchRequest)
+            return tasks.first
+        } catch {
+            print("Ошибка при поиске задачи: \(error.localizedDescription)")
+            return nil
+        }
+    }
+
     
 }
 // MARK: - Setup UI
@@ -169,8 +220,33 @@ extension MainViewController {
         
         navigationController?.pushViewController(vc, animated: true)
     }
+    override func tableView(_ tableView: UITableView, commit editingStyle: UITableViewCell.EditingStyle, forRowAt indexPath: IndexPath) {
+        if editingStyle == .delete {
+            let taskToDelete = tasks[indexPath.row]
+            
+         
+            let storageManager = StorageManager.shared
+            if let taskEntity = fetchTaskEntity(by: taskToDelete.title) {
+                storageManager.deleteTask(taskEntity)
+            }
+
+            tasks.remove(at: indexPath.row)
+            tasksCount = tasks.count
+            setupFooterView()
+
+            tableView.deleteRows(at: [indexPath], with: .fade)
+        }
+    }
+
     
     
+}
+extension MainViewController: NewTaskViewControllerDelegate {
+    func reloadData() {
+        fetchData()
+        tableView.reloadData()
+     
+    }
 }
 
   

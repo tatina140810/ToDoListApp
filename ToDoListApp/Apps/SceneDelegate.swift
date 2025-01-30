@@ -4,14 +4,18 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
 
     var window: UIWindow?
 
+    
 
     func scene(_ scene: UIScene, willConnectTo session: UISceneSession, options connectionOptions: UIScene.ConnectionOptions) {
             guard let windowScene = (scene as? UIWindowScene) else { return }
             
             window = UIWindow(windowScene: windowScene)
-        let root = UINavigationController(rootViewController: ViewController())
+        let root = UINavigationController(rootViewController: MainViewController())
             window?.rootViewController = root
             window?.makeKeyAndVisible()
+        if #available(iOS 13.0, *) {
+            UIWindow.appearance().overrideUserInterfaceStyle = .dark
+        }
         }
 
     func sceneDidDisconnect(_ scene: UIScene) {
@@ -32,7 +36,7 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
 
     func sceneDidEnterBackground(_ scene: UIScene) {
      
-        (UIApplication.shared.delegate as? AppDelegate)?.saveContext()
+      //  (UIApplication.shared.delegate as? AppDelegate)?.saveContext()
     }
 
 
