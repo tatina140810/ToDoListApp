@@ -64,6 +64,7 @@ class StorageManager {
         
         saveContext()
     }
+   
     
     // MARK: - Удаление задачи
     func deleteTask(_ task: TaskEntity) {

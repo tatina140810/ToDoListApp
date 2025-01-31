@@ -4,11 +4,21 @@ import CoreData
 protocol NewTaskViewControllerDelegate: AnyObject {
     func reloadData()
 }
+
+protocol OpenTaskViewControllerDelegate: AnyObject{
+    func reloadData()
+}
+
 class MainViewController: UITableViewController, UISearchResultsUpdating {
     
     private var tasks: [Task] = []
     private let searchController = UISearchController(searchResultsController: nil)
     private var tasksCount = 0
+    private var filteredTasks: [Task] = []
+    private var isSearching: Bool {
+        return !(searchController.searchBar.text?.isEmpty ?? true)
+    }
+
 
     
     override func viewDidLoad() {
@@ -18,25 +28,87 @@ class MainViewController: UITableViewController, UISearchResultsUpdating {
         setupSearchBar()
         setupFooterView()
         tableView.register(TaskCell.self, forCellReuseIdentifier: "TaskCell")
-       // loadTasks()
+        loadTasks()
         fetchData()
           }
+    
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        searchController.searchBar.searchTextField.textColor = .white
+    }
+
 
           // MARK: - Загрузка задач из JSON
-          private func loadTasks() {
-              JsonManager.shared.fetchTodos { [weak self] fetchedTasks in
-                  self?.tasks = fetchedTasks
-                  self?.tableView.reloadData()
-                  self?.tasksCount = self?.tasks.count ?? 0
-                  self?.setupFooterView()
-                  
-              }
-          }
-  
-    func updateSearchResults(for searchController: UISearchController) {
-            let searchText = searchController.searchBar.text ?? ""
-            print("Ищем: \(searchText)")
+    private func loadTasks() {
+        JsonManager.shared.fetchTodos { [weak self] fetchedTasks in
+            guard let self = self else { return }
+            
+            let storageManager = StorageManager.shared
+            let context = storageManager.context
+            
+            for task in fetchedTasks {
+                // Проверяем, есть ли уже такая задача в Core Data
+                if !self.isTaskExists(title: task.title) {
+                    let newTask = TaskEntity(context: context)
+                    newTask.title = task.title
+                    newTask.taskDescription = task.description
+                    newTask.taskDate = task.date
+                    newTask.completed = false
+                }
+            }
+            
+            // Сохраняем новые задачи в Core Data
+            storageManager.saveContext()
+            
+            // Загружаем данные из Core Data в таблицу
+            self.tasks = storageManager.fetchTasks().map { taskEntity in
+                Task(
+                    title: taskEntity.title ?? "Без названия",
+                    description: taskEntity.taskDescription ?? "Нет описания",
+                    date: taskEntity.taskDate ?? "Нет даты",
+                    completed: false
+                )
+            }
+            
+            self.tasksCount = self.tasks.count
+            self.setupFooterView()
+            
+            DispatchQueue.main.async {
+                self.tableView.reloadData()
+            }
         }
+    }
+    private func isTaskExists(title: String) -> Bool {
+        let fetchRequest: NSFetchRequest<TaskEntity> = TaskEntity.fetchRequest()
+        fetchRequest.predicate = NSPredicate(format: "title == %@", title)
+
+        do {
+            let existingTasks = try StorageManager.shared.context.fetch(fetchRequest)
+            return !existingTasks.isEmpty // Если нашли задачу → true
+        } catch {
+            print("Ошибка при проверке существующей задачи: \(error.localizedDescription)")
+            return false
+        }
+    }
+
+
+  
+        func updateSearchResults(for searchController: UISearchController) {
+            guard let searchText = searchController.searchBar.text?.lowercased(), !searchText.isEmpty else {
+                filteredTasks = tasks
+                tableView.reloadData()
+                return
+            }
+            
+            filteredTasks = tasks.filter { task in
+                return task.title.lowercased().contains(searchText) ||
+                       task.description.lowercased().contains(searchText) ||
+                       task.date.lowercased().contains(searchText)
+            }
+            
+            tableView.reloadData()
+        }
+
     private func setupFooterView() {
            let footerView = UIView(frame: CGRect(x: 0, y: 0, width: view.frame.width, height: 60))
            footerView.backgroundColor = UIColor(hex: "#272729")
@@ -77,7 +149,6 @@ class MainViewController: UITableViewController, UISearchResultsUpdating {
 
        @objc private func addTaskTapped() {
            print("Кнопка 'Добавить' нажата ✅")
-           
            let vc = NewTaskViewController()
            vc.delegate = self
            navigationController?.pushViewController(vc, animated: true)
@@ -155,8 +226,10 @@ private extension MainViewController {
           searchController.searchBar.placeholder = "Search"
         searchController.searchBar.tintColor = .white
 
+
+
           let searchTextField = searchController.searchBar.searchTextField
-          searchTextField.textColor = UIColor.white
+
           searchTextField.backgroundColor = UIColor(hex: "#272729")
           searchTextField.layer.cornerRadius = 10
           searchTextField.clipsToBounds = true
@@ -200,26 +273,35 @@ private extension MainViewController {
   }
 extension MainViewController {
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return tasks.count
+        return isSearching ? filteredTasks.count : tasks.count
     }
+
     override func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
         return 106
     }
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-           let cell = tableView.dequeueReusableCell(withIdentifier: "TaskCell", for: indexPath) as! TaskCell
-        let task = tasks[indexPath.row]
-               cell.configure(title: task.title, description: task.description, date: task.date)
-               cell.backgroundColor = .clear
-               return cell
-       }
-    override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        let vc = OpenTaskViewController()
-        vc.titleLabel.text = tasks[indexPath.row].title
-        vc.descriptionLabel.text = tasks[indexPath.row].description
-        vc.dateLabel.text = tasks[indexPath.row].date
+        let cell = tableView.dequeueReusableCell(withIdentifier: "TaskCell", for: indexPath) as! TaskCell
+        let task = isSearching ? filteredTasks[indexPath.row] : tasks[indexPath.row]
         
+       // cell.configure(title: task.title, description: task.description, date: task.date)
+        cell.configure(with: task, at: indexPath)
+        cell.delegate = self
+        cell.backgroundColor = .clear
+        return cell
+    }
+
+    override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        let task = isSearching ? filteredTasks[indexPath.row] : tasks[indexPath.row]
+
+        let vc = OpenTaskViewController()
+        vc.taskTitle = task.title
+           vc.taskDescription = task.description
+           vc.taskDate = task.date
+        vc.delegate = self
+      
         navigationController?.pushViewController(vc, animated: true)
     }
+
     override func tableView(_ tableView: UITableView, commit editingStyle: UITableViewCell.EditingStyle, forRowAt indexPath: IndexPath) {
         if editingStyle == .delete {
             let taskToDelete = tasks[indexPath.row]
@@ -241,13 +323,22 @@ extension MainViewController {
     
     
 }
-extension MainViewController: NewTaskViewControllerDelegate {
+extension MainViewController: NewTaskViewControllerDelegate, OpenTaskViewControllerDelegate {
     func reloadData() {
         fetchData()
         tableView.reloadData()
      
     }
 }
+extension MainViewController: TaskCellDelegate {
+    func didUpdateTaskCompletion(at indexPath: IndexPath, completed: Bool) {
+        tasks[indexPath.row].toggleCompletion()
+        print(tasks[indexPath.row].completed)
+        tableView.reloadRows(at: [indexPath], with: .automatic)
+    }
+}
+
+
 
   
 
