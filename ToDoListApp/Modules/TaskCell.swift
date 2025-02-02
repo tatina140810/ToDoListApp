@@ -7,8 +7,8 @@ struct Task {
     var completed: Bool
     
     mutating func toggleCompletion() {
-          completed.toggle()
-      }
+        completed.toggle()
+    }
 }
 protocol TaskCellDelegate: AnyObject {
     func didUpdateTaskCompletion(at indexPath: IndexPath, completed: Bool)
@@ -21,12 +21,12 @@ class TaskCell: UITableViewCell {
     private var indexPath: IndexPath?
     
     private let checkBoxButton: CheckboxButton = {
-          let button = CheckboxButton()
-        button.tintColor = .darkYellow
-          button.translatesAutoresizingMaskIntoConstraints = false
-          return button
-      }()
-      
+        let button = CheckboxButton()
+        button.tintColor = UIColor(hex: "#FED702")
+        button.translatesAutoresizingMaskIntoConstraints = false
+        return button
+    }()
+    
     
     private let titleLabel: UILabel = {
         let label = UILabel()
@@ -61,11 +61,11 @@ class TaskCell: UITableViewCell {
         contentView.backgroundColor = .clear
         setupViews()
     }
-
+    
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
-
+    
     private func setupViews() {
         contentView.addSubview(checkBoxButton)
         contentView.addSubview(titleLabel)
@@ -75,53 +75,80 @@ class TaskCell: UITableViewCell {
         NSLayoutConstraint.activate([
             checkBoxButton.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 12),
             checkBoxButton.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 15),
-                        checkBoxButton.widthAnchor.constraint(equalToConstant: 40),
-                        checkBoxButton.heightAnchor.constraint(equalToConstant: 40),
-        
+            checkBoxButton.widthAnchor.constraint(equalToConstant: 40),
+            checkBoxButton.heightAnchor.constraint(equalToConstant: 40),
+            
             titleLabel.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 12),
             titleLabel.leadingAnchor.constraint(equalTo: checkBoxButton.trailingAnchor, constant: 12),
             titleLabel.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -12),
-        
+            
             descriptionLabel.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 4),
             descriptionLabel.leadingAnchor.constraint(equalTo: titleLabel.leadingAnchor),
             descriptionLabel.trailingAnchor.constraint(equalTo: titleLabel.trailingAnchor),
-        
+            
             dateLabel.topAnchor.constraint(equalTo: descriptionLabel.bottomAnchor, constant: 4),
             dateLabel.leadingAnchor.constraint(equalTo: titleLabel.leadingAnchor),
             dateLabel.trailingAnchor.constraint(equalTo: titleLabel.trailingAnchor),
             dateLabel.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -12)
         ])
         checkBoxButton.addTarget(self, action: #selector(checkBoxTapped), for: .touchUpInside)
+        
+    }
+    
+    func configure(with task: Task, at indexPath: IndexPath) {
+        self.indexPath = indexPath
+        titleLabel.text = task.title
+        descriptionLabel.text = task.description
+        dateLabel.text = task.date
+        checkBoxButton.isChecked = task.completed
+        
+        updateTitleAppearance(task.completed)
+    }
+    
+    func updateTitleAppearance(_ completed: Bool) {
+        let attributeString = NSMutableAttributedString(string: titleLabel.text ?? "")
+        if completed {
+            attributeString.addAttribute(.strikethroughStyle, value: NSUnderlineStyle.single.rawValue, range: NSRange(location: 0, length: attributeString.length))
+            titleLabel.textColor = .gray
+        } else {
+            attributeString.removeAttribute(.strikethroughStyle, range: NSRange(location: 0, length: attributeString.length))
+            titleLabel.textColor = .white
+        }
+        titleLabel.attributedText = attributeString
+    }
+    
+    //    @objc private func checkBoxTapped() {
+    //        guard let indexPath = indexPath else { return }
+    //        checkBoxButton.isChecked.toggle()
+    //        updateTitleAppearance(checkBoxButton.isChecked)
+    //
+    //        delegate?.didUpdateTaskCompletion(at: indexPath, completed: checkBoxButton.isChecked)
+    //    }
+    @objc private func checkBoxTapped() {
+        guard let indexPath = indexPath else { return }
+        
+        checkBoxButton.isChecked.toggle()
+        
+        // ✅ Обновляем внешний вид текста в зависимости от состояния чекбокса
+        updateTitleAppearance(isCompleted: checkBoxButton.isChecked)
 
+        // ✅ Сообщаем делегату об изменении состояния задачи
+        delegate?.didUpdateTaskCompletion(at: indexPath, completed: checkBoxButton.isChecked)
     }
 
-    func configure(with task: Task, at indexPath: IndexPath) {
-           self.indexPath = indexPath
-           titleLabel.text = task.title
-           descriptionLabel.text = task.description
-           dateLabel.text = task.date
-           checkBoxButton.isChecked = task.completed
+    /// ✅ Метод для изменения стиля текста в зависимости от выполнения задачи
+    private func updateTitleAppearance(isCompleted: Bool) {
+        let text = titleLabel.text ?? ""
 
-           updateTitleAppearance(task.completed)
-       }
+        let attributes: [NSAttributedString.Key: Any] = isCompleted ? [
+            .strikethroughStyle: NSUnderlineStyle.single.rawValue, // ✅ Добавляем зачёркивание
+            .foregroundColor: UIColor.gray
+        ] : [
+            .strikethroughStyle: NSUnderlineStyle([]).rawValue, // ✅ Полностью убираем зачёркивание
+            .foregroundColor: UIColor.white
+        ]
 
-       private func updateTitleAppearance(_ completed: Bool) {
-           let attributeString = NSMutableAttributedString(string: titleLabel.text ?? "")
-           if completed {
-               attributeString.addAttribute(.strikethroughStyle, value: NSUnderlineStyle.single.rawValue, range: NSRange(location: 0, length: attributeString.length))
-               titleLabel.textColor = .gray
-           } else {
-               attributeString.removeAttribute(.strikethroughStyle, range: NSRange(location: 0, length: attributeString.length))
-               titleLabel.textColor = .red
-           }
-           titleLabel.attributedText = attributeString
-       }
+        titleLabel.attributedText = NSAttributedString(string: text, attributes: attributes)
+    }
 
-       @objc private func checkBoxTapped() {
-           guard let indexPath = indexPath else { return }
-           checkBoxButton.isChecked.toggle()
-           updateTitleAppearance(checkBoxButton.isChecked)
-           
-           delegate?.didUpdateTaskCompletion(at: indexPath, completed: checkBoxButton.isChecked)
-       }
-   }
+}

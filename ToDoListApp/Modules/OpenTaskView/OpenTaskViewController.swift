@@ -1,18 +1,9 @@
-//
-//  OpenTaskViewController.swift
-//  ToDoListApp
-//
-//  Created by Tatina Dzhakypbekova on 30/1/25.
-//
-
 import UIKit
-import CoreData
-
 
 final class OpenTaskViewController: UIViewController {
     
-    weak var delegate: OpenTaskViewControllerDelegate?
-   
+    var presenter: OpenTaskPresenterProtocol!
+    
     var taskTitle: String?
     var taskDescription: String?
     var taskDate: String?
@@ -63,7 +54,7 @@ final class OpenTaskViewController: UIViewController {
         let stackView = UIStackView()
         stackView.axis = .vertical
         stackView.distribution = .fillEqually
-        stackView.backgroundColor = .grayForButton
+        stackView.backgroundColor = UIColor(hex: "#EDEDED")
         stackView.layer.cornerRadius = 10
         stackView.clipsToBounds = true
         stackView.alignment = .leading
@@ -131,14 +122,24 @@ final class OpenTaskViewController: UIViewController {
         super.viewDidLoad()
         view.backgroundColor = .clear
         setupUI()
-        updateUI()
+        presenter.viewDidLoad()
     }
+    
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
-        
         if self.isMovingFromParent {
-  
-            backButtonTapped()
+            updateTask()
+        }
+    }
+    
+    private func updateTask() {
+        let title = titleTextField.text?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        let description = descriptionTextView.text.trimmingCharacters(in: .whitespacesAndNewlines)
+        let date = dateTextField.text ?? ""
+        
+        if !title.isEmpty || !description.isEmpty {
+            presenter.updateTask(title: title, description: description, date: date)
+            
         }
     }
     private func updateUI() {
@@ -146,6 +147,7 @@ final class OpenTaskViewController: UIViewController {
         descriptionTextView.text = taskDescription ?? "Нет описания"
         dateTextField.text = taskDate ?? "Нет даты"
     }
+    // MARK: - Setup UI
     
     private func setupUI(){
         view.addSubview(taskStackView)
@@ -164,8 +166,8 @@ final class OpenTaskViewController: UIViewController {
             taskStackView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
             taskStackView.heightAnchor.constraint(lessThanOrEqualToConstant: 500),
             titleTextField.heightAnchor.constraint(equalToConstant: 40),
-                   descriptionTextView.heightAnchor.constraint(equalToConstant: 100),
-                   dateTextField.heightAnchor.constraint(equalToConstant: 40),
+            descriptionTextView.heightAnchor.constraint(equalToConstant: 100),
+            dateTextField.heightAnchor.constraint(equalToConstant: 40),
             
             buttonsStackView.topAnchor.constraint(equalTo: taskStackView.bottomAnchor, constant: 16),
             buttonsStackView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 53),
@@ -182,65 +184,33 @@ final class OpenTaskViewController: UIViewController {
             deleteButton.trailingAnchor.constraint(equalTo: buttonsStackView.trailingAnchor)
         ])
     }
-    @objc func editButtonTapped() {
-        print("Edit Button Tapped")
+    
+    // MARK: - Button Actions
+    @objc private func editButtonTapped() {
         titleTextField.isUserInteractionEnabled = true
         descriptionTextView.isUserInteractionEnabled = true
-        dateTextField.isUserInteractionEnabled = true
         titleTextField.becomeFirstResponder()
-        
     }
-    @objc func shareButtonTapped() {
-        print("Share Button Tapped")
-    }
-    @objc func deleteButtonTapped() {
-        print("Delete Button Tapped")
-
-        guard let task = fetchTaskEntity(by: taskTitle ?? "") else {
-            print("Ошибка: задача не найдена в базе данных")
-            return
-        }
-
-        let storageManager = StorageManager.shared
-        storageManager.deleteTask(task)
-
-        delegate?.reloadData()
-        navigationController?.popViewController(animated: true)
-    }
-
-    @objc private func backButtonTapped() {
-        print("Пользователь нажал кнопку 'Назад'")
-
-        guard let task = fetchTaskEntity(by: taskTitle ?? "") else {
-            print("Ошибка: задача не найдена в базе данных")
-            return
-        }
-
-        let storageManager = StorageManager.shared
-
-        storageManager.updateTask(task,
-            title: titleTextField.text ?? "Без названия",
-            taskDescription: descriptionTextView.text ?? "Нет описания",
-            taskDate: dateTextField.text ?? "Нет даты",
-            completed: task.completed
-        )
-
-        delegate?.reloadData()
-        navigationController?.popViewController(animated: true)
+    @objc private func shareButtonTapped() {
+        print("Share button Tapped")
     }
     
-    private func fetchTaskEntity(by title: String) -> TaskEntity? {
-        let fetchRequest: NSFetchRequest<TaskEntity> = TaskEntity.fetchRequest()
-        fetchRequest.predicate = NSPredicate(format: "title == %@", title)
-
-        do {
-            return try StorageManager.shared.context.fetch(fetchRequest).first
-        } catch {
-            print("Ошибка при поиске задачи: \(error.localizedDescription)")
-            return nil
-        }
+    @objc private func deleteButtonTapped() {
+        presenter.deleteTask()
     }
-
-    
 }
 
+// MARK: - OpenTaskViewProtocol
+extension OpenTaskViewController: OpenTaskViewProtocol {
+    func showError(_ message: String) {
+        let alert = UIAlertController(title: "Ошибка", message: message, preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: "OK", style: .default))
+        present(alert, animated: true)
+    }
+    
+    func displayTask(title: String, description: String, date: String) {
+        titleTextField.text = title
+        descriptionTextView.text = description
+        dateTextField.text = date
+    }
+}

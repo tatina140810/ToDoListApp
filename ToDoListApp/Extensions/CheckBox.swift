@@ -1,10 +1,3 @@
-//
-//  CheckBox.swift
-//  ToDoListApp
-//
-//  Created by Tatina Dzhakypbekova on 31/1/25.
-//
-
 import UIKit
 
 class CheckboxButton: UIButton {
