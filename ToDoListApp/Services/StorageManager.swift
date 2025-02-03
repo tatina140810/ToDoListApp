@@ -40,22 +40,11 @@ class StorageManager {
         
         saveContext()
     }
-    func fetchTaskEntity(by title: String) -> TaskEntity? {
-           let fetchRequest: NSFetchRequest<TaskEntity> = TaskEntity.fetchRequest()
-           fetchRequest.predicate = NSPredicate(format: "title == %@", title)
-           
-           do {
-               return try context.fetch(fetchRequest).first
-           } catch {
-               print("Ошибка при поиске задачи: \(error.localizedDescription)")
-               return nil
-           }
-       }
     
     // MARK: - Получение всех задач (с сортировкой)
     func fetchTasks() -> [TaskEntity] {
         let fetchRequest: NSFetchRequest<TaskEntity> = TaskEntity.fetchRequest()
-        let sortDescriptor = NSSortDescriptor(key: "taskDate", ascending: true) // Сортировка по дате
+        let sortDescriptor = NSSortDescriptor(key: "taskDate", ascending: true)
         fetchRequest.sortDescriptors = [sortDescriptor]
         
         do {
@@ -82,4 +71,17 @@ class StorageManager {
         context.delete(task)
         saveContext()
     }
+    
+    // MARK: - Получение задачи по заголовку
+    func fetchTaskEntity(by title: String) -> TaskEntity? {
+           let fetchRequest: NSFetchRequest<TaskEntity> = TaskEntity.fetchRequest()
+           fetchRequest.predicate = NSPredicate(format: "title == %@", title)
+           
+           do {
+               return try context.fetch(fetchRequest).first
+           } catch {
+               print("Ошибка при поиске задачи: \(error.localizedDescription)")
+               return nil
+           }
+       }
 }

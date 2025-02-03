@@ -8,8 +8,12 @@ final class MainPresenter: MainPresenterProtocol {
     private var searchQuery: String = ""
     
     var filteredTasks: [Task] {
-        return searchQuery.isEmpty ? tasks : tasks.filter { $0.title.lowercased().contains(searchQuery) }
+        return searchQuery.isEmpty ? tasks : tasks.filter {
+            $0.title.lowercased().contains(searchQuery) ||
+            $0.description.lowercased().contains(searchQuery) 
+        }
     }
+
     func openTaskDetails(_ task: TaskEntity) {
         router?.navigateToOpenTask(task: task)
     }
@@ -69,9 +73,9 @@ final class MainPresenter: MainPresenterProtocol {
     
     func searchTask(with query: String) {
         searchQuery = query.lowercased()
-        view?.reloadData() 
+        view?.reloadData()
     }
-    
+
     func resetSearch() {
         searchQuery = ""
         view?.reloadData()

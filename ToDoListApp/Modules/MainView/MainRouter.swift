@@ -2,7 +2,6 @@ import UIKit
 
 final class MainRouter: MainRouterProtocol {
     
-    
     weak var viewController: UIViewController?
     
     static func createModule() -> MainViewController {

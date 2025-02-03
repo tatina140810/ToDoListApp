@@ -47,24 +47,5 @@ class JsonManager {
         }
         task.resume()
     }
-    
-    // MARK: - Загрузка JSON из локального файла
-    func loadLocalTasks(completion: @escaping ([Task]) -> Void) {
-        guard let url = Bundle.main.url(forResource: "tasks", withExtension: "json") else { return }
-        
-        do {
-            let data = try Data(contentsOf: url)
-            let decodedData = try JSONDecoder().decode(ToDoTasks.self, from: data)
-            
-            let tasks = decodedData.todos.map { todo in
-                Task(title: "Task \(todo.id)", description: todo.todo, date: "No date", completed: false)
-            }
-            
-            DispatchQueue.main.async {
-                completion(tasks)
-            }
-        } catch {
-            print("Ошибка загрузки локального JSON: \(error)")
-        }
-    }
+
 }

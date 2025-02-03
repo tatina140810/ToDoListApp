@@ -64,7 +64,6 @@ final class NewTaskViewController: UIViewController, UITextViewDelegate {
         }
     }
 
-
     private func setupTextView() {
         view.addSubview(titleText)
         view.addSubview(dateLabel)
