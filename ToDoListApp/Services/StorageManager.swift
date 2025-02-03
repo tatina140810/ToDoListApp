@@ -50,10 +50,9 @@ class StorageManager {
         
         do {
             let tasks = try context.fetch(fetchRequest)
-            print("✅ Загружено задач: \(tasks.count)")
             return tasks
         } catch {
-            print("⚠️ Ошибка загрузки задач: \(error.localizedDescription)")
+            print("Ошибка загрузки задач: \(error.localizedDescription)")
             return []
         }
     }
@@ -93,9 +92,8 @@ class StorageManager {
         if let storeURL = storeURL {
             do {
                 try FileManager.default.removeItem(at: storeURL)
-                print("✅ Старая база данных удалена")
             } catch {
-                print("⚠️ Ошибка удаления базы данных: \(error)")
+                print("Ошибка удаления базы данных: \(error)")
             }
         }
     }

@@ -42,8 +42,8 @@ final class MainInteractorTests: XCTestCase {
         interactor.fetchTasks()
 
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-            XCTAssertFalse(self.interactor.taskEntityes.isEmpty, "⚠️ taskEntities оказался пустым")
-            XCTAssertTrue(self.mockPresenter.didFetchTasksCalled, "⚠️ didFetchTasks() не был вызван")
+            XCTAssertFalse(self.interactor.taskEntityes.isEmpty, "taskEntities оказался пустым")
+            XCTAssertTrue(self.mockPresenter.didFetchTasksCalled, "didFetchTasks() не был вызван")
             expectation.fulfill()
         }
 
