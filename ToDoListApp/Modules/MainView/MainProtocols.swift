@@ -4,13 +4,16 @@ import Foundation
 protocol MainViewProtocol: AnyObject {
     func reloadData()
     func showError(_ message: String)
+    func startLoading() 
+    func stopLoading()
 }
 
 // MARK: - Presenter -> View
 
 protocol MainPresenterProtocol: AnyObject {
     var tasks: [Task] { get }
-    var filteredTasks: [Task] { get }  
+    var taskEntityes: [TaskEntity] { get }
+    var filteredTasks: [Task] { get }
     func viewDidLoad()
     func addTaskTapped()
     func searchTask(with query: String)
@@ -20,7 +23,8 @@ protocol MainPresenterProtocol: AnyObject {
     func getTaskEntity(at index: Int) -> TaskEntity?
     func openTaskDetails(_ task: TaskEntity)
     func setTasks(_ tasks: [Task])
-    func setTaskEntities(_ taskEntities: [TaskEntity])
+    func setTaskEntities(_ taskEntityes: [TaskEntity])
+  
 }
 
 

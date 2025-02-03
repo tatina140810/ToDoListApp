@@ -1,8 +1,8 @@
-import XCTest
+import Foundation
 @testable import ToDoListApp
 
 final class MockMainInteractor: MainInteractorProtocol {
-    var taskEntities: [TaskEntity] = []
+    var taskEntityes: [TaskEntity] = []
 
     var fetchTasksCalled = false
     var saveTaskCalled = false
@@ -11,7 +11,7 @@ final class MockMainInteractor: MainInteractorProtocol {
     var loadTaskCalled = false
 
     func setTaskEntities(_ tasks: [ToDoListApp.TaskEntity]) {
-        self.taskEntities = tasks
+        self.taskEntityes = tasks
     }
 
     func saveTask(_ task: ToDoListApp.TaskEntity) {

@@ -1,21 +1,20 @@
 import Foundation
 
 final class OpenTaskPresenter: OpenTaskPresenterProtocol {
-  
-
+    
     weak var view: OpenTaskViewProtocol?
     var interactor: OpenTaskInteractorProtocol?
     var router: OpenTaskRouterProtocol?
-
+    
     func viewDidLoad() {
         interactor?.fetchTask()
     }
-
+    
     func editTask(title: String, description: String) {
         let date = DateFormatterHelper.getCurrentDate()
         interactor?.updateTask(title: title, description: description, date: date)
     }
-
+    
     func deleteTask() {
         interactor?.deleteTask()
     }
@@ -27,6 +26,9 @@ final class OpenTaskPresenter: OpenTaskPresenterProtocol {
         let date = DateFormatterHelper.getCurrentDate()
         interactor?.updateTask(title: title, description: description, date: date)
     }
+    func fetchTask() {
+        interactor?.fetchTask()
+    }
 }
 
 // MARK: - OpenTaskInteractorOutputProtocol
@@ -37,11 +39,11 @@ extension OpenTaskPresenter: OpenTaskInteractorOutputProtocol {
     func didFetchTask(title: String, description: String, date: String) {
         view?.displayTask(title: title, description: description, date: date)
     }
-
+    
     func didFailWithError(_ error: String) {
         print("Ошибка: \(error)")
     }
-
+    
     func didDeleteTask() {
         router?.navigateBack()
     }

@@ -19,9 +19,17 @@ final class MainViewController: UIViewController {
         return tableView
     }()
     
+    private let activityIndicator: UIActivityIndicatorView = {
+        let indicator = UIActivityIndicatorView(style: .large)
+        indicator.color = .gray
+        indicator.hidesWhenStopped = true
+        return indicator
+    }()
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         setupView()
+        startLoading()
         presenter.viewDidLoad()
     }
     
@@ -59,8 +67,6 @@ final class MainViewController: UIViewController {
         setupFooterView()
         setupUI()
         setupSearchBar()
-        
-        
     }
     
     func setupNavigationBar() {
@@ -80,7 +86,6 @@ final class MainViewController: UIViewController {
         backButton.title = "Назад"
         backButton.tintColor = UIColor(hex: "#FED702")
         navigationItem.backBarButtonItem = backButton
-        
     }
     
     func setupSearchBar() {
@@ -132,11 +137,9 @@ final class MainViewController: UIViewController {
         actionButton.addTarget(self, action: #selector(addTaskTapped), for: .touchUpInside)
         actionButton.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(footerView)
-       
+        
         footerView.addSubview(titleLabel)
         footerView.addSubview(actionButton)
-        
-       
         
         NSLayoutConstraint.activate([
             footerView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
@@ -153,12 +156,18 @@ final class MainViewController: UIViewController {
     }
     private func setupUI() {
         view.addSubview(tableView)
+        view.addSubview(activityIndicator)
+        activityIndicator.translatesAutoresizingMaskIntoConstraints = false
+        view.bringSubviewToFront(activityIndicator)
         
         NSLayoutConstraint.activate([
             tableView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
             tableView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             tableView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            tableView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -83)
+            tableView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -83),
+            activityIndicator.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            activityIndicator.centerYAnchor.constraint(equalTo: view.centerYAnchor)
+            
         ])
         
         setupFooterView()
@@ -166,7 +175,21 @@ final class MainViewController: UIViewController {
     
     @objc private func addTaskTapped() {
         presenter.addTaskTapped()
+    }
+    func startLoading() {
+        DispatchQueue.main.async {
+            
+            self.activityIndicator.startAnimating()
+            self.view.isUserInteractionEnabled = false
         }
+    }
+    func stopLoading() {
+        DispatchQueue.main.async {
+            self.activityIndicator.stopAnimating()
+            self.view.isUserInteractionEnabled = true
+        }
+    }
+    
 }
 
 // MARK: - UITableViewDataSource
@@ -193,12 +216,30 @@ extension MainViewController: UITableViewDataSource, UITableViewDelegate {
     }
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        guard let taskEntity = presenter.getTaskEntity(at: indexPath.row) else {
-            print("Ошибка: задача не найдена")
-            return
+        if isSearching {
+            
+            let task = presenter.filteredTasks[indexPath.row]
+            
+            guard let taskEntity = presenter.taskEntityes.first(where: {
+                $0.title == task.title &&
+                $0.taskDescription == task.description &&
+                $0.taskDate == task.date
+            }) else {
+                print("Ошибка: задача не найдена в полном списке")
+                return
+            }
+            
+            presenter.openTaskDetails(taskEntity)
+        } else {
+            
+            guard let taskEntity = presenter.getTaskEntity(at: indexPath.row) else {
+                print("Ошибка: задача не найдена")
+                return
+            }
+            presenter.openTaskDetails(taskEntity)
         }
-        presenter.openTaskDetails(taskEntity)
     }
+    
     
     func tableView(_ tableView: UITableView, commit editingStyle: UITableViewCell.EditingStyle, forRowAt indexPath: IndexPath) {
         if editingStyle == .delete {
@@ -219,7 +260,6 @@ extension MainViewController: UISearchResultsUpdating {
             presenter.searchTask(with: query)
         }
     }
-    
 }
 
 // MARK: - MainViewProtocol

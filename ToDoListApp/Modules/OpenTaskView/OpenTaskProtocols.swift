@@ -12,6 +12,7 @@ protocol OpenTaskPresenterProtocol: AnyObject {
     func editTask(title: String, description: String)
     func deleteTask()
     func updateTask(title: String, description: String, date: String)
+    func fetchTask()
 }
 
 // MARK: - Presenter -> Interactor
@@ -19,7 +20,7 @@ protocol OpenTaskInteractorProtocol: AnyObject {
     func fetchTask()
     func updateTask(title: String, description: String, date: String)
     func deleteTask()
-       
+    
 }
 
 // MARK: - Interactor -> Presenter

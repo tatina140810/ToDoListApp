@@ -8,10 +8,11 @@ final class OpenTaskViewController: UIViewController {
     var taskDescription: String?
     var taskDate: String?
     
+    
     let titleTextField: UITextField = {
         let textField = UITextField()
         textField.translatesAutoresizingMaskIntoConstraints = false
-        textField.text = "Сходить в спортзал или сделать тренировку дома. Не забыть про разминку и растяжку!"
+        textField.text = ""
         textField.textColor = .white
         textField.isUserInteractionEnabled = false
         textField.font = UIFont.boldSystemFont(ofSize: 16)
@@ -22,7 +23,7 @@ final class OpenTaskViewController: UIViewController {
         let textView = UITextView()
         textView.translatesAutoresizingMaskIntoConstraints = false
         textView.backgroundColor = UIColor(hex: "#272729")
-        textView.text = "Сходить в спортзал или сделать тренировку дома. Не забыть про разминку и растяжку!"
+        textView.text = ""
         textView.textColor = .white
         textView.isUserInteractionEnabled = false
         textView.font = UIFont.systemFont(ofSize: 12)
@@ -32,7 +33,7 @@ final class OpenTaskViewController: UIViewController {
         let textField = UITextField()
         textField.translatesAutoresizingMaskIntoConstraints = false
         textField.isUserInteractionEnabled = false
-        textField.text = "Сходить в спортзал или сделать тренировку дома. Не забыть про разминку и растяжку!"
+        textField.text = ""
         textField.textColor = .gray
         textField.font = UIFont.systemFont(ofSize: 12)
         return textField
@@ -47,6 +48,8 @@ final class OpenTaskViewController: UIViewController {
         stackView.backgroundColor = UIColor(hex: "#272729")
         stackView.layer.cornerRadius = 10
         stackView.clipsToBounds = true
+        stackView.isUserInteractionEnabled = true
+        
         stackView.translatesAutoresizingMaskIntoConstraints = false
         return stackView
     }()
@@ -58,6 +61,7 @@ final class OpenTaskViewController: UIViewController {
         stackView.layer.cornerRadius = 10
         stackView.clipsToBounds = true
         stackView.alignment = .leading
+        stackView.isHidden = true
         stackView.translatesAutoresizingMaskIntoConstraints = false
         return stackView
     }()
@@ -68,7 +72,7 @@ final class OpenTaskViewController: UIViewController {
         config.image = UIImage(resource: .edit)
         config.imagePlacement = .trailing
         config.titleAlignment = .leading
-        config.imagePadding = 130
+        config.imagePadding = 90
         config.contentInsets = NSDirectionalEdgeInsets(top: 10, leading: 14, bottom: 10, trailing: 14)
         
         let button = UIButton(configuration: config)
@@ -86,7 +90,7 @@ final class OpenTaskViewController: UIViewController {
         config.title = "Поделиться"
         config.image = UIImage(resource: .export)
         config.imagePlacement = .trailing
-        config.imagePadding = 155
+        config.imagePadding = 115
         config.titleAlignment = .leading
         config.contentInsets = NSDirectionalEdgeInsets(top: 10, leading: 14, bottom: 10, trailing: 14)
         
@@ -102,12 +106,13 @@ final class OpenTaskViewController: UIViewController {
     private lazy var deleteButton: UIButton = {
         var config = UIButton.Configuration.plain()
         config.baseForegroundColor = .red
-        config.title = "Улалить"
+        config.title = "Удалить"
         config.image = UIImage(resource: .trash)
         config.imagePlacement = .trailing
-        config.imagePadding = 183
+        config.imagePadding = 140
         config.titleAlignment = .leading
         config.contentInsets = NSDirectionalEdgeInsets(top: 10, leading: 14, bottom: 10, trailing: 14)
+        config.preferredSymbolConfigurationForImage = UIImage.SymbolConfiguration(scale: .large)
         
         let button = UIButton(configuration: config)
         
@@ -122,6 +127,7 @@ final class OpenTaskViewController: UIViewController {
         super.viewDidLoad()
         view.backgroundColor = .clear
         setupUI()
+        longPressGesture()
         presenter.viewDidLoad()
     }
     
@@ -159,6 +165,7 @@ final class OpenTaskViewController: UIViewController {
         taskStackView.addArrangedSubview(descriptionTextView)
         taskStackView.addArrangedSubview(dateTextField)
         
+        
         NSLayoutConstraint.activate([
             taskStackView.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             taskStackView.centerYAnchor.constraint(equalTo: view.centerYAnchor),
@@ -170,8 +177,9 @@ final class OpenTaskViewController: UIViewController {
             dateTextField.heightAnchor.constraint(equalToConstant: 40),
             
             buttonsStackView.topAnchor.constraint(equalTo: taskStackView.bottomAnchor, constant: 16),
-            buttonsStackView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 53),
-            buttonsStackView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -53),
+            buttonsStackView.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            
+            buttonsStackView.widthAnchor.constraint(equalToConstant: 254),
             buttonsStackView.heightAnchor.constraint(equalToConstant: 132),
             
             editButton.leadingAnchor.constraint(equalTo: buttonsStackView.leadingAnchor),
@@ -183,6 +191,11 @@ final class OpenTaskViewController: UIViewController {
             deleteButton.leadingAnchor.constraint(equalTo: buttonsStackView.leadingAnchor),
             deleteButton.trailingAnchor.constraint(equalTo: buttonsStackView.trailingAnchor)
         ])
+    }
+    private func longPressGesture(){
+        let longPressGesture = UILongPressGestureRecognizer(target: self, action: #selector(handleLongPress(_:)))
+        longPressGesture.minimumPressDuration = 0.5
+        taskStackView.addGestureRecognizer(longPressGesture)
     }
     
     // MARK: - Button Actions
@@ -198,10 +211,19 @@ final class OpenTaskViewController: UIViewController {
     @objc private func deleteButtonTapped() {
         presenter.deleteTask()
     }
+    @objc private func handleLongPress(_ gesture: UILongPressGestureRecognizer) {
+        if gesture.state == .began {
+            buttonsStackView.isHidden = false
+        }
+    }
+    override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
+        buttonsStackView.isHidden = true
+    }
 }
 
 // MARK: - OpenTaskViewProtocol
 extension OpenTaskViewController: OpenTaskViewProtocol {
+    
     func showError(_ message: String) {
         let alert = UIAlertController(title: "Ошибка", message: message, preferredStyle: .alert)
         alert.addAction(UIAlertAction(title: "OK", style: .default))

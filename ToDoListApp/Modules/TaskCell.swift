@@ -1,15 +1,5 @@
 import UIKit
 
-struct Task {
-    let title: String
-    let description: String
-    let date: String
-    var completed: Bool
-    
-    mutating func toggleCompletion() {
-        completed.toggle()
-    }
-}
 protocol TaskCellDelegate: AnyObject {
     func didUpdateTaskCompletion(at indexPath: IndexPath, completed: Bool)
 }
@@ -106,7 +96,7 @@ class TaskCell: UITableViewCell {
         updateTitleAppearance(task.completed)
         updateTitleAppearance(isCompleted: task.completed)
     }
-    
+
     func updateTitleAppearance(_ completed: Bool) {
         let attributeString = NSMutableAttributedString(string: titleLabel.text ?? "")
         if completed {

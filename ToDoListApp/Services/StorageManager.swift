@@ -1,10 +1,10 @@
 import CoreData
 
 class StorageManager {
-
+    
     static let shared = StorageManager()
     private init() {}
-
+    
     lazy var persistentContainer: NSPersistentContainer = {
         let container = NSPersistentContainer(name: "ToDoListApp")
         container.loadPersistentStores { storeDescription, error in
@@ -18,7 +18,7 @@ class StorageManager {
     var context: NSManagedObjectContext {
         return persistentContainer.viewContext
     }
-
+    
     // MARK: - Сохранение контекста
     func saveContext() {
         if context.hasChanges {
@@ -42,19 +42,22 @@ class StorageManager {
     }
     
     // MARK: - Получение всех задач (с сортировкой)
+    
     func fetchTasks() -> [TaskEntity] {
         let fetchRequest: NSFetchRequest<TaskEntity> = TaskEntity.fetchRequest()
         let sortDescriptor = NSSortDescriptor(key: "taskDate", ascending: true)
         fetchRequest.sortDescriptors = [sortDescriptor]
         
         do {
-            return try context.fetch(fetchRequest)
+            let tasks = try context.fetch(fetchRequest)
+            print("✅ Загружено задач: \(tasks.count)")
+            return tasks
         } catch {
-            print("Ошибка загрузки задач: \(error.localizedDescription)")
+            print("⚠️ Ошибка загрузки задач: \(error.localizedDescription)")
             return []
         }
     }
-
+    
     // MARK: - Обновление задачи
     func updateTask(_ task: TaskEntity, title: String, taskDescription: String, taskDate: String, completed: Bool) {
         task.title = title
@@ -64,7 +67,6 @@ class StorageManager {
         
         saveContext()
     }
-   
     
     // MARK: - Удаление задачи
     func deleteTask(_ task: TaskEntity) {
@@ -74,14 +76,28 @@ class StorageManager {
     
     // MARK: - Получение задачи по заголовку
     func fetchTaskEntity(by title: String) -> TaskEntity? {
-           let fetchRequest: NSFetchRequest<TaskEntity> = TaskEntity.fetchRequest()
-           fetchRequest.predicate = NSPredicate(format: "title == %@", title)
-           
-           do {
-               return try context.fetch(fetchRequest).first
-           } catch {
-               print("Ошибка при поиске задачи: \(error.localizedDescription)")
-               return nil
-           }
-       }
+        let fetchRequest: NSFetchRequest<TaskEntity> = TaskEntity.fetchRequest()
+        fetchRequest.predicate = NSPredicate(format: "title == %@", title)
+        
+        do {
+            let results = try context.fetch(fetchRequest)
+            return results.first
+        } catch {
+            print("Ошибка при поиске задачи: \(error.localizedDescription)")
+            return nil
+        }
+    }
+    // MARK: - Очистить persistentContainer
+    func resetPersistentStore() {
+        let storeURL = persistentContainer.persistentStoreDescriptions.first?.url
+        if let storeURL = storeURL {
+            do {
+                try FileManager.default.removeItem(at: storeURL)
+                print("✅ Старая база данных удалена")
+            } catch {
+                print("⚠️ Ошибка удаления базы данных: \(error)")
+            }
+        }
+    }
+    
 }

@@ -1,11 +1,16 @@
 import Foundation
 
 final class MainPresenter: MainPresenterProtocol {
-    func setTaskEntities(_ taskEntities: [TaskEntity]) {
-        self.taskEntities = taskEntities
+    
+    func setTaskEntities(_ taskEntityes: [TaskEntity]) {
+        self.taskEntityes = taskEntityes
     }
     
     private var searchQuery: String = ""
+    private var isFirstLaunch = true
+    var isSearching: Bool {
+        return !searchQuery.isEmpty
+    }
     
     var filteredTasks: [Task] {
         return searchQuery.isEmpty ? tasks : tasks.filter {
@@ -13,19 +18,18 @@ final class MainPresenter: MainPresenterProtocol {
             $0.description.lowercased().contains(searchQuery) 
         }
     }
-
+    
     func openTaskDetails(_ task: TaskEntity) {
         router?.navigateToOpenTask(task: task)
     }
-    
     
     weak var view: MainViewProtocol?
     var interactor: MainInteractorProtocol?
     var router: MainRouterProtocol?
     
-    private var taskEntities: [TaskEntity] = [] {
+    var taskEntityes: [TaskEntity] = [] {
         didSet {
-            tasks = taskEntities.map { Task(
+            tasks = taskEntityes.map { Task(
                 title: $0.title ?? "Без названия",
                 description: $0.taskDescription ?? "Нет описания",
                 date: $0.taskDate ?? "Нет даты",
@@ -37,20 +41,18 @@ final class MainPresenter: MainPresenterProtocol {
     private(set) var tasks: [Task] = []
     
     func viewDidLoad() {
+        if isFirstLaunch {
+            interactor?.loadTasks() 
+            isFirstLaunch = false   
+        }
         interactor?.fetchTasks()
-        interactor?.loadTasks()
+        
     }
-    
-    func didFetchTasks(_ tasks: [Task]) {
-        self.tasks = tasks
-        view?.reloadData()
-    }
-    
     
     func toggleTaskCompletion(at index: Int) {
-        guard index < taskEntities.count else { return }
+        guard index < taskEntityes.count else { return }
         
-        let taskEntity = taskEntities[index]
+        let taskEntity = taskEntityes[index]
         taskEntity.completed.toggle()
         
         interactor?.updateTask(taskEntity, completed: taskEntity.completed)
@@ -58,12 +60,12 @@ final class MainPresenter: MainPresenterProtocol {
     }
     
     func deleteTask(at index: Int) {
-        guard index < taskEntities.count else { return }
+        guard index < taskEntityes.count else { return }
         
-        let taskEntity = taskEntities[index]
+        let taskEntity = taskEntityes[index]
         interactor?.deleteTask(taskEntity)
         
-        taskEntities.remove(at: index)
+        taskEntityes.remove(at: index)
         view?.reloadData()
     }
     
@@ -75,15 +77,15 @@ final class MainPresenter: MainPresenterProtocol {
         searchQuery = query.lowercased()
         view?.reloadData()
     }
-
+    
     func resetSearch() {
         searchQuery = ""
         view?.reloadData()
     }
     
     func getTaskEntity(at index: Int) -> TaskEntity? {
-        guard index < taskEntities.count else { return nil }
-        return taskEntities[index]
+        guard index < taskEntityes.count else { return nil }
+        return taskEntityes[index]
     }
     func setTasks(_ tasks: [Task]) {
         self.tasks = tasks
@@ -93,18 +95,19 @@ final class MainPresenter: MainPresenterProtocol {
 // MARK: - MainInteractorOutputProtocol
 extension MainPresenter: MainInteractorOutputProtocol {
     func didDeleteTask() {
-        tasks = taskEntities.map { Task(
-                   title: $0.title ?? "Без названия",
-                   description: $0.taskDescription ?? "Нет описания",
-                   date: $0.taskDate ?? "Нет даты",
-                   completed: $0.completed
-               )}
-               
-               view?.reloadData() 
+        tasks = taskEntityes.map { Task(
+            title: $0.title ?? "Без названия",
+            description: $0.taskDescription ?? "Нет описания",
+            date: $0.taskDate ?? "Нет даты",
+            completed: $0.completed
+        )}
+        
+        view?.reloadData() 
     }
     
     func didFetchTasks(_ tasks: [TaskEntity]) {
-        self.taskEntities = tasks
+        self.taskEntityes = tasks
+        view?.stopLoading()
         view?.reloadData()
     }
     

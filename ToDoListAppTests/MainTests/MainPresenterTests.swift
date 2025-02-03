@@ -30,6 +30,14 @@ final class MainPresenterTests: XCTestCase{
         presenter.viewDidLoad()
         XCTAssertTrue(mockInteractor.fetchTasksCalled, "Fetch Tasks() не был вызван")
     }
+    func testStopLoading_ShouldCallStopLoadingAfterDataFetched() {
+
+        presenter.didFetchTasks([])
+        
+        XCTAssertTrue(mockView.stopLoadingCalled, "stopLoading() не был вызван")
+    }
+
+
     func testSearchTask_ShouldFilterTasks() {
         let task1 = Task(title: "Задача 1", description: "Опмсание 1", date: "01/02.2025", completed: false)
         let task2 = Task(title: "Задача 2", description: "Опмсание 2", date: "01/02.2025", completed: false)

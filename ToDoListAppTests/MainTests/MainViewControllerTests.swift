@@ -1,10 +1,3 @@
-//
-//  MainViewControllerTests.swift
-//  ToDoListAppTests
-//
-//  Created by Tatina Dzhakypbekova on 2/2/25.
-//
-
 import XCTest
 
 @testable import ToDoListApp
