@@ -97,12 +97,14 @@ class TaskCell: UITableViewCell {
     
     func configure(with task: Task, at indexPath: IndexPath) {
         self.indexPath = indexPath
+        self.task = task
         titleLabel.text = task.title
         descriptionLabel.text = task.description
         dateLabel.text = task.date
         checkBoxButton.isChecked = task.completed
         
         updateTitleAppearance(task.completed)
+        updateTitleAppearance(isCompleted: task.completed)
     }
     
     func updateTitleAppearance(_ completed: Bool) {
@@ -117,34 +119,24 @@ class TaskCell: UITableViewCell {
         titleLabel.attributedText = attributeString
     }
     
-    //    @objc private func checkBoxTapped() {
-    //        guard let indexPath = indexPath else { return }
-    //        checkBoxButton.isChecked.toggle()
-    //        updateTitleAppearance(checkBoxButton.isChecked)
-    //
-    //        delegate?.didUpdateTaskCompletion(at: indexPath, completed: checkBoxButton.isChecked)
-    //    }
+  
     @objc private func checkBoxTapped() {
         guard let indexPath = indexPath else { return }
         
         checkBoxButton.isChecked.toggle()
-        
-        // ✅ Обновляем внешний вид текста в зависимости от состояния чекбокса
         updateTitleAppearance(isCompleted: checkBoxButton.isChecked)
 
-        // ✅ Сообщаем делегату об изменении состояния задачи
         delegate?.didUpdateTaskCompletion(at: indexPath, completed: checkBoxButton.isChecked)
     }
 
-    /// ✅ Метод для изменения стиля текста в зависимости от выполнения задачи
     private func updateTitleAppearance(isCompleted: Bool) {
         let text = titleLabel.text ?? ""
 
         let attributes: [NSAttributedString.Key: Any] = isCompleted ? [
-            .strikethroughStyle: NSUnderlineStyle.single.rawValue, // ✅ Добавляем зачёркивание
+            .strikethroughStyle: NSUnderlineStyle.single.rawValue,
             .foregroundColor: UIColor.gray
         ] : [
-            .strikethroughStyle: NSUnderlineStyle([]).rawValue, // ✅ Полностью убираем зачёркивание
+            .strikethroughStyle: NSUnderlineStyle([]).rawValue,
             .foregroundColor: UIColor.white
         ]
 
