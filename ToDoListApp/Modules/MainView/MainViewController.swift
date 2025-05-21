@@ -7,11 +7,11 @@ final class MainViewController: UIViewController {
         return !(searchController.searchBar.text?.isEmpty ?? true)
     }
     
-    private let searchController = UISearchController(searchResultsController: nil)
+    private(set) var searchController = UISearchController(searchResultsController: nil)
     private let footerView = UIView()
     private let titleLabel = UILabel()
     
-    private let tableView: UITableView = {
+    let tableView: UITableView = {
         let tableView = UITableView()
         tableView.translatesAutoresizingMaskIntoConstraints = false
         tableView.backgroundColor = .black
@@ -173,7 +173,7 @@ final class MainViewController: UIViewController {
         setupFooterView()
     }
     
-    @objc private func addTaskTapped() {
+    @objc func addTaskTapped() {
         presenter.addTaskTapped()
     }
     func startLoading() {

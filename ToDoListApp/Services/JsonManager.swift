@@ -10,6 +10,11 @@ struct ToDo: Codable {
 struct ToDoTasks: Codable {
     let todos: [ToDo]
 }
+enum Constants {
+    enum URLs {
+        static let todosJSON = "https://drive.google.com/uc?export=download&id=1MXypRbK2CS9fqPhTtPonn580h1sHUs2W"
+    }
+}
 
 class JsonManager {
     static let shared = JsonManager()
@@ -17,7 +22,7 @@ class JsonManager {
     
     // MARK: - Загрузка задач из JSON по URL
     func fetchTodos(completion: @escaping ([Task]) -> Void) {
-        let urlString = "https://drive.google.com/uc?export=download&id=1MXypRbK2CS9fqPhTtPonn580h1sHUs2W"
+        let urlString = Constants.URLs.todosJSON
         guard let url = URL(string: urlString) else { return }
         
         let task = URLSession.shared.dataTask(with: url) { data, response, error in

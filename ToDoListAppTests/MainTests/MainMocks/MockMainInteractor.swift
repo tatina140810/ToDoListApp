@@ -2,35 +2,31 @@ import Foundation
 @testable import ToDoListApp
 
 final class MockMainInteractor: MainInteractorProtocol {
-    var taskEntityes: [TaskEntity] = []
-
     var fetchTasksCalled = false
     var saveTaskCalled = false
     var deleteTaskCalled = false
     var updateTaskCalled = false
-    var loadTaskCalled = false
-
-    func setTaskEntities(_ tasks: [ToDoListApp.TaskEntity]) {
-        self.taskEntityes = tasks
-    }
-
-    func saveTask(_ task: ToDoListApp.TaskEntity) {
-        saveTaskCalled = true
-    }
-
-    func updateTask(_ task: ToDoListApp.TaskEntity, completed: Bool) {
-        updateTaskCalled = true
-    }
-
-    func loadTasks() {
-        loadTaskCalled = true
-    }
-
+    var loadTasksCalled = false
+    
     func fetchTasks() {
         fetchTasksCalled = true
     }
-
+    
+    func saveTask(_ task: TaskEntity) {
+        saveTaskCalled = true
+    }
+    
     func deleteTask(_ task: TaskEntity) {
         deleteTaskCalled = true
     }
+    
+    func updateTask(_ task: TaskEntity, completed: Bool) {
+        updateTaskCalled = true
+    }
+    
+    func loadTasks() {
+        loadTasksCalled = true
+    }
+    
+    func setTaskEntities(_ tasks: [TaskEntity]) {}
 }

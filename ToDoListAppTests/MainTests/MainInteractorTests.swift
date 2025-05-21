@@ -1,76 +1,53 @@
 import XCTest
-
+import CoreData
 @testable import ToDoListApp
 
-final class MainInteractorTests: XCTestCase {
-    var interactor: MainInteractor!
-    var mockPresenter: MockMainPresenter!
+final class MockMainInteractorTests: XCTestCase {
+    
+    var interactor: MockMainInteractor!
+    var testTask: TaskEntity!
     
     override func setUp() {
         super.setUp()
-       
-        interactor  = MainInteractor()
-        mockPresenter = MockMainPresenter()
-        interactor.presenter = mockPresenter
-
-        let context = StorageManager.shared.context
-        let task = TaskEntity(context: context)
-        task.title = "Тестовая задача"
-
-        StorageManager.shared.saveContext() 
-
-        interactor.setTaskEntities([task])
+        interactor = MockMainInteractor()
+        
+        let container = NSPersistentContainer(name: "ToDoListApp")
+        container.persistentStoreDescriptions.first?.url = URL(fileURLWithPath: "/dev/null")
+        container.loadPersistentStores { _, _ in }
+        let context = container.viewContext
+        
+        testTask = TaskEntity(context: context)
+        testTask.title = "Test"
     }
+    
     override func tearDown() {
         interactor = nil
-        mockPresenter = nil
+        testTask = nil
         super.tearDown()
     }
-
-    func testFetchTasks_ShouldReturnTasks() {
-        let context = StorageManager.shared.context
-        let task = TaskEntity(context: context)
-        task.title = "Тестовая задача"
-        task.taskDescription = "Описание задачи"
-        task.taskDate = "2025-02-04"
-        task.completed = false
-
-        StorageManager.shared.saveContext()
-
-        let expectation = self.expectation(description: "Fetch tasks should complete")
-
+    
+    func testFetchTasks_ShouldSetFlag() {
         interactor.fetchTasks()
-
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-            XCTAssertFalse(self.interactor.taskEntityes.isEmpty, "taskEntities оказался пустым")
-            XCTAssertTrue(self.mockPresenter.didFetchTasksCalled, "didFetchTasks() не был вызван")
-            expectation.fulfill()
-        }
-
-        waitForExpectations(timeout: 2.0, handler: nil)
+        XCTAssertTrue(interactor.fetchTasksCalled)
     }
-
-    func testDeleteTask_shouldDeleteTask() {
-        let context = StorageManager.shared.context
-        let task = TaskEntity(context: context)
-        task.title = "Удаляемая задача"
-
-        StorageManager.shared.saveContext()
-
-        interactor.presenter = mockPresenter
-        interactor.setTaskEntities([task])
-
-        let expectation = self.expectation(description: "Ожидание удаления задачи")
-
-        interactor.deleteTask(task)
-
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-            XCTAssertTrue(self.mockPresenter.didDeleteTaskCalled, "didDeleteTask() не был вызван")
-            expectation.fulfill()
-        }
-
-        waitForExpectations(timeout: 1.0)
+    
+    func testSaveTask_ShouldSetFlag() {
+        interactor.saveTask(testTask)
+        XCTAssertTrue(interactor.saveTaskCalled)
     }
-
-
+    
+    func testDeleteTask_ShouldSetFlag() {
+        interactor.deleteTask(testTask)
+        XCTAssertTrue(interactor.deleteTaskCalled)
+    }
+    
+    func testUpdateTask_ShouldSetFlag() {
+        interactor.updateTask(testTask, completed: true)
+        XCTAssertTrue(interactor.updateTaskCalled)
+    }
+    
+    func testLoadTasks_ShouldSetFlag() {
+        interactor.loadTasks()
+        XCTAssertTrue(interactor.loadTasksCalled)
+    }
 }

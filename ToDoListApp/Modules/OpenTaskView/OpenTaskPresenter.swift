@@ -1,10 +1,15 @@
 import Foundation
 
 final class OpenTaskPresenter: OpenTaskPresenterProtocol {
-    
+   
+    private let task: TaskEntity
     weak var view: OpenTaskViewProtocol?
     var interactor: OpenTaskInteractorProtocol?
     var router: OpenTaskRouterProtocol?
+    
+    init(task: TaskEntity){
+        self.task = task
+    }
     
     func viewDidLoad() {
         interactor?.fetchTask()

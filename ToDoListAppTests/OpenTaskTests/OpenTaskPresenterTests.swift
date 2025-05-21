@@ -1,4 +1,5 @@
 import XCTest
+import CoreData
 @testable import ToDoListApp
 
 final class OpenTaskPresenterTests: XCTestCase {
@@ -9,15 +10,25 @@ final class OpenTaskPresenterTests: XCTestCase {
 
     override func setUp() {
         super.setUp()
-        presenter = OpenTaskPresenter()
+
+        let container = NSPersistentContainer(name: "ToDoListApp")
+        container.persistentStoreDescriptions.first?.url = URL(fileURLWithPath: "/dev/null")
+        container.loadPersistentStores(completionHandler: { _, _ in })
+        let context = container.viewContext
+
+        let task = TaskEntity(context: context)
+        task.title = "Задача для теста"
+        
+        presenter = OpenTaskPresenter(task: task)
         mockView = MockOpenTaskView()
         mockInteractor = MockOpenTaskInteractor()
         mockRouter = MockOpenTaskRouter()
-
+        
         presenter.view = mockView
         presenter.interactor = mockInteractor
         presenter.router = mockRouter
     }
+
 
     override func tearDown() {
         presenter = nil
