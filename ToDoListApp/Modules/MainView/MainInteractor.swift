@@ -3,8 +3,13 @@ import Foundation
 final class MainInteractor: MainInteractorProtocol {
     
     weak var presenter: MainInteractorOutputProtocol?
-    var taskEntityes: [TaskEntity] = []
-    private let storageManager = StorageManager.shared
+       var taskEntityes: [TaskEntity] = []
+       private let storageManager: StorageManagerProtocol
+
+       init(storageManager: StorageManagerProtocol) {
+           self.storageManager = storageManager
+       }
+
     
     // MARK: - Fetch Tasks
     func fetchTasks() {

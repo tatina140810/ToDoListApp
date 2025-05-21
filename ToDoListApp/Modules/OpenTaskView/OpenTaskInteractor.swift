@@ -4,8 +4,13 @@ import CoreData
 final class OpenTaskInteractor: OpenTaskInteractorProtocol {
     
     weak var presenter: OpenTaskInteractorOutputProtocol?
-    private let storageManager = StorageManager.shared
+    private let storageManager: StorageManagerProtocol
     var task: TaskEntity?
+    
+    init(storageManager: StorageManagerProtocol) {
+           self.storageManager = storageManager
+       }
+       
     
     func fetchTask() {
         guard let title = task?.title else { return }
@@ -22,7 +27,7 @@ final class OpenTaskInteractor: OpenTaskInteractorProtocol {
     
     func deleteTask() {
         guard let task = task else { return }
-        StorageManager.shared.deleteTask(task)
+        storageManager.deleteTask(task)
         presenter?.didDeleteTask()
     }
     
